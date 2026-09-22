@@ -161,7 +161,19 @@ textarea.field{min-height:84px;resize:vertical}
 .tname small{display:block;font-weight:500;font-size:13px;color:var(--sub)}
 .pill{flex:none;font-size:13px;background:var(--moss-soft);border-radius:99px;padding:2px 10px;color:var(--moss-d)}
 .pill:empty{display:none}
-.crit{background:var(--card);border-radius:12px;padding:10px 14px;margin-top:8px}
+.crit{display:block;background:var(--card);border-radius:12px;padding:10px 14px;margin-top:8px;color:inherit;text-decoration:none;min-height:48px}
+.crit .has{font-size:12px;color:var(--sub);font-weight:500}
+.ccard{background:var(--card);border-radius:20px;overflow:hidden;margin-top:4px}
+.cphoto{aspect-ratio:4/3;background:var(--moss-soft);display:flex;align-items:center;justify-content:center}
+.cphoto img{width:100%;height:100%;object-fit:cover;display:block}
+.nophoto{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:40px;color:var(--moss);cursor:pointer;padding:20px}
+.nophoto span{font-size:16px;font-weight:700}
+.cbody{padding:16px 18px 18px}.cbody h2{font-size:26px}
+.cmemo{margin:12px 0 0;font-size:16px;line-height:1.8;white-space:pre-wrap}
+.empty-note{color:var(--sub)}
+.cbody .meta{font-size:13px;color:var(--sub);margin:10px 0 0}
+.item.sight{border-left-color:var(--wood)}
+.item .role{font-size:11px}
 .crit p{margin:4px 0 0;font-size:15px;color:#3A463A}
 .cname{font-weight:700;font-size:17px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .role{font-size:12px;font-weight:700;border-radius:99px;padding:1px 10px;background:var(--moss-soft);color:var(--moss-d)}
@@ -212,6 +224,9 @@ const CONCERNS = ["元気","虫","病気","獣害","枝折れ","弱ってる"];
 const TASKS = ["草刈り","ネット修理","剪定","施肥","水やり","獣害対策","植え付け","収穫","片付け","見回り","その他"];
 const AREAS = ["山の東エリア","山の西エリア","野下家","全体"];
 const UNITS = ["個","kg","かご"];
+const C_GROUPS = ["昆虫","鳥","両生類","爬虫類","哺乳類","植物","きのこ","その他"];
+const C_ROLES = ["益虫","受粉者","害虫","中立"];
+const cid = name => String(name||"").normalize("NFKC").trim().replace(/[\/]/g,"・");
 /* 季節のヘッダー画像：月ごとに img/hero-◯◯.jpg を使う（画像を足したらここに書き足す） */
 const SEASON_BY_MONTH = {10:"autumn", 11:"autumn", 12:"autumn"};
 function heroSeason(){
@@ -257,6 +272,8 @@ function localStore(key){
     async recentRecords(n){ return Object.values(db().records).sort(byNew).slice(0,n); },
     async allRecords(){ return Object.values(db().records).sort(byNew); },
     async allCreatures(){ return Object.values(db().creatures); },
+    async getCreature(id){ return db().creatures[id] || null; },
+    async recordsForCreature(id){ return Object.values(db().records).filter(r=>r.creature===id).sort(byNew); },
     async setCreature(id, data){ const d=db(); d.creatures[id] = {...(d.creatures[id]||{}), ...data, id}; save(d); },
     async members(){ return Object.keys(db().members).sort(); },
     async addMember(n){ const d=db(); d.members[n]=true; save(d); }
@@ -298,6 +315,8 @@ async function fireStore(key){
     async recentRecords(n){ const q = await F.getDocs(F.query(col("records"), F.orderBy("createdAt","desc"), F.limit(n))); return q.docs.map(out).sort(byNew); },
     async allRecords(){ const q = await F.getDocs(col("records")); return q.docs.map(out).sort(byNew); },
     async allCreatures(){ const q = await F.getDocs(col("creatures")); return q.docs.map(d=>({...d.data(), id:d.id})); },
+    async getCreature(id){ try { const s = await F.getDoc(ref("creatures",id)); return s.exists() ? {...s.data(), id:s.id} : null; } catch { const s = await F.getDocFromCache(ref("creatures",id)).catch(()=>null); return s?.exists() ? {...s.data(), id:s.id} : null; } },
+    async recordsForCreature(id){ const q = await F.getDocs(F.query(col("records"), F.where("creature","==",id))); return q.docs.map(out).sort(byNew); },
     async setCreature(id, data){ fire(F.setDoc(ref("creatures",id), {...data, id}, {merge:true})); },
     async members(){ const q = await F.getDocs(col("members")); return q.docs.map(d=>d.id).sort(); },
     async addMember(n){ await F.setDoc(ref("members",n), {addedAt:Date.now()}); }
@@ -641,7 +660,7 @@ const view = {
   },
 
   async creatures(){
-    $app.innerHTML = `<div class="top"><button class="back" onclick="location.hash='#home'">← もどる</button></div><h2>🐞 生き物図鑑</h2>
+    $app.innerHTML = `<div class="top"><button class="back" onclick="location.hash='#home'">← もどる</button></div><div class="row" style="justify-content:space-between"><h2>🐞 生き物図鑑</h2><button class="gps" onclick="location.hash='#creature-new'">＋ 登録する</button></div>
       <input class="field" id="q" placeholder="名前やメモでさがす" style="margin:12px 0 10px">
       <div class="filter">${chips(["すべて","益虫","受粉者","害虫","中立"],"role")}</div><div id="cl"><p class="empty">読み込み中…</p></div>`;
     wireChips($app); $app.querySelector('[data-group="role"] .chip').setAttribute("aria-pressed","true");
@@ -652,13 +671,103 @@ const view = {
       const hit = all.filter(c => (role==="すべて" || c.role===role) && (!q || (c.name+c.memo).includes(q)));
       document.getElementById("cl").innerHTML = hit.length ? gOrder.map(g => {
         const list = hit.filter(c => (c.group||"その他")===g).sort((a,b)=>a.name.localeCompare(b.name,"ja")); if(!list.length) return "";
-        return `<section class="area"><h3>${esc(g)}<span>${list.length}</span></h3>${list.map(c=>`<div class="crit">
-          <div class="cname">${esc(c.name)}${c.role?`<span class="role r-${esc(c.role)}">${esc(c.role)}</span>`:""}</div>
-          ${c.memo?`<p>${esc(c.memo)}</p>`:""}</div>`).join("")}</section>`;
-      }).join("") : `<p class="empty">${all.length ? "見つかりませんでした" : "図鑑がまだ空です。設定から creatures.json を読み込んでください。"}</p>`;
+        return `<section class="area"><h3>${esc(g)}<span>${list.length}</span></h3>${list.map(c=>`<a class="crit" href="#creature/${encodeURIComponent(c.id||cid(c.name))}">
+          <div class="cname">${esc(c.name)}${c.role?`<span class="role r-${esc(c.role)}">${esc(c.role)}</span>`:""}${c.hasPhoto?`<span class="has">📷</span>`:""}${c.seen?`<span class="has">見つけた ${c.seen}回</span>`:""}</div>
+          ${c.memo?`<p>${esc(c.memo.length>48 ? c.memo.slice(0,48)+"…" : c.memo)}</p>`:""}</a>`).join("")}</section>`;
+      }).join("") : `<p class="empty">${all.length ? "見つかりませんでした" : "図鑑がまだ空です。右上の「＋ 登録する」から追加できます。"}</p>`;
     };
     $app.querySelector('[data-group="role"]').addEventListener("click", () => setTimeout(draw));
     document.getElementById("q").addEventListener("input", draw); draw();
+  },
+
+  async creatureNew(){
+    $app.innerHTML = `<div class="top"><button class="back" onclick="location.hash='#creatures'">← もどる</button><span class="who">${esc(me)}さん</span></div>
+      <h2>🐞 生き物を登録</h2>
+      <div class="sec"><h3>名前</h3><input class="field" id="cn" placeholder="例：ナナホシテントウ" maxlength="40"></div>
+      <div class="sec"><h3>分類</h3>${chips(C_GROUPS,"cg")}</div>
+      <div class="sec"><h3>果樹園にとって</h3>${chips(C_ROLES,"cr")}</div>
+      <div class="sec"><h3>写真</h3><label class="photo">📷 写真をとる・選ぶ<input type="file" accept="image/*"></label><img class="thumb" hidden alt=""></div>
+      <div class="sec"><h3>特徴・メモ</h3><textarea class="field" id="cm" placeholder="見た目、どこで見たか、果樹への影響など"></textarea></div>
+      <div class="save"><button id="save">図鑑に登録する</button></div>`;
+    wireChips($app); const getPhoto = photoField($app);
+    document.getElementById("save").onclick = async () => {
+      const name = document.getElementById("cn").value.trim(); if(!name){ toast("名前を入れてください"); return; }
+      const id = cid(name);
+      if(await store.getCreature(id).catch(()=>null)){ toast("もう図鑑にあります。そのページを開きます"); location.hash = "#creature/" + encodeURIComponent(id); return; }
+      const photo = getPhoto();
+      await store.setCreature(id, { name, group: picked($app,"cg")[0] || "その他", role: picked($app,"cr")[0] || "", memo: document.getElementById("cm").value.trim(),
+        hasPhoto: !!photo, addedBy: me, addedAt: today() });
+      if(photo) await store.setPhoto("c-" + id, photo);
+      toast(`${name} を図鑑に登録しました`); location.replace("#creature/" + encodeURIComponent(id));
+    };
+  },
+
+  async creature(id){
+    const c = await store.getCreature(id).catch(()=>null);
+    if(!c){ $app.innerHTML = `<div class="top"><button class="back" onclick="location.hash='#creatures'">← もどる</button></div><p class="empty">この生き物は図鑑にありません</p>`; return; }
+    $app.innerHTML = `<div class="top"><button class="back" onclick="location.hash='#creatures'">← 図鑑へ</button><span class="who">${esc(me)}さん</span></div>
+      <article class="ccard">
+        <div class="cphoto" id="cphoto">${c.hasPhoto ? `<p class="empty">写真を読み込み中…</p>` : `<label class="nophoto">📷<span>写真を登録する</span><input type="file" accept="image/*" id="cpin" hidden></label>`}</div>
+        <div class="cbody">
+          <h2>${esc(c.name)}</h2>
+          <div class="cname" style="margin-top:6px">${c.group?`<span class="role">${esc(c.group)}</span>`:""}${c.role?`<span class="role r-${esc(c.role)}">${esc(c.role)}</span>`:""}</div>
+          ${c.memo ? `<p class="cmemo">${esc(c.memo)}</p>` : `<p class="cmemo empty-note">特徴やメモはまだありません</p>`}
+          <p class="meta">${c.addedBy ? `登録：${esc(c.addedBy)}` : ""}${c.editedBy ? `　更新：${esc(c.editedBy)}（${esc(md(c.editedAt))}）` : ""}</p>
+        </div>
+      </article>
+      <details class="edit"><summary>✏️ 情報を直す・写真を変える</summary>
+        <div class="sec"><h3>分類</h3>${chips(C_GROUPS,"cg")}</div>
+        <div class="sec"><h3>果樹園にとって</h3>${chips(C_ROLES,"cr")}</div>
+        <div class="sec"><h3>特徴・メモ</h3><textarea class="field" id="cm">${esc(c.memo||"")}</textarea></div>
+        <div class="sec"><h3>写真</h3><label class="photo">📷 写真を変える<input type="file" accept="image/*"></label><img class="thumb" hidden alt=""></div>
+        <button class="gps" id="csave" style="margin-top:14px">この内容で直す</button>
+      </details>
+      <div class="sec"><h3>見つけた記録</h3><div id="seen"><p class="empty">読み込み中…</p></div></div>
+      <div class="save"><button id="found">今日見つけた！を記録</button></div>`;
+    wireChips($app);
+    if(c.group) $app.querySelector(`[data-group="cg"] [data-v="${CSS.escape(c.group)}"]`)?.setAttribute("aria-pressed","true");
+    if(c.role) $app.querySelector(`[data-group="cr"] [data-v="${CSS.escape(c.role)}"]`)?.setAttribute("aria-pressed","true");
+    const getPhoto = photoField($app.querySelector(".edit"));
+    if(c.hasPhoto) store.getPhoto("c-" + id).then(src => { const el = document.getElementById("cphoto"); if(!el) return;
+      el.innerHTML = src ? `<img alt="${esc(c.name)}の写真">` : `<p class="empty">写真はまだ届いていません</p>`; if(src) el.querySelector("img").src = src; }).catch(()=>{});
+    const quick = document.getElementById("cpin");
+    if(quick) quick.onchange = async () => { const f = quick.files[0]; if(!f) return;
+      try { const data = await shrink(f); await store.setPhoto("c-" + id, data); await store.setCreature(id, { hasPhoto:true, editedBy: me, editedAt: today() }); toast("写真を登録しました"); view.creature(id); }
+      catch { toast("写真を読み込めませんでした"); } };
+    document.getElementById("csave").onclick = async () => {
+      const photo = getPhoto();
+      await store.setCreature(id, { group: picked($app,"cg")[0] || c.group || "その他", role: picked($app,"cr")[0] || "", memo: document.getElementById("cm").value.trim(),
+        ...(photo ? {hasPhoto:true} : {}), editedBy: me, editedAt: today() });
+      if(photo) await store.setPhoto("c-" + id, photo);
+      toast("図鑑を直しました"); view.creature(id);
+    };
+    document.getElementById("found").onclick = () => location.hash = "#sight/" + encodeURIComponent(id);
+    store.recordsForCreature(id).then(list => { const el = document.getElementById("seen"); if(!el) return;
+      el.innerHTML = list.length ? list.slice(0,30).map(itemHTML).join("") : `<p class="empty">まだ記録がありません。見つけたら下のボタンから</p>`; wirePhotos(el);
+    }).catch(() => { const el = document.getElementById("seen"); if(el) el.innerHTML = `<p class="empty">電波が戻ったら表示されます</p>`; });
+  },
+
+  async sight(id){
+    const c = await store.getCreature(id).catch(()=>null); if(!c){ location.replace("#creatures"); return; }
+    $app.innerHTML = `<div class="top"><button class="back" onclick="history.back()">← もどる</button><span class="who">${esc(me)}さん</span></div>
+      <h2>🔍 ${esc(c.name)}を見つけた</h2>
+      <div class="sec"><h3>日付</h3><input class="field" type="date" id="date" value="${today()}" style="max-width:200px"></div>
+      <div class="sec"><h3>場所</h3>${chips(AREAS.slice(0,3),"area")}</div>
+      <div class="sec"><h3>木ID（木の上や近くなら）</h3><input class="field" id="tid" inputmode="numeric" placeholder="例：15"></div>
+      <div class="sec"><h3>どれくらい</h3>${chips(["1匹・少し","いくつか","たくさん"],"cnt")}</div>
+      <div class="sec"><h3>写真</h3><label class="photo">📷 写真をとる<input type="file" accept="image/*" capture="environment"></label><img class="thumb" hidden alt=""></div>
+      <div class="sec"><h3>メモ</h3><textarea class="field" id="memo" placeholder="例：新芽にびっしり、葉の裏にいた"></textarea></div>
+      <div class="save"><button id="save">記録する</button></div>`;
+    wireChips($app); const getPhoto = photoField($app);
+    document.getElementById("save").onclick = async () => {
+      const photo = getPhoto(), treeId = normId(document.getElementById("tid").value);
+      const rid = await store.addRecord({ type:"sight", date: document.getElementById("date").value || today(), by: me, creature: id, creatureName: c.name,
+        role: c.role || "", area: picked($app,"area")[0] || "", treeId: treeId || "", amount: picked($app,"cnt")[0] || "", memo: document.getElementById("memo").value.trim(), hasPhoto: !!photo });
+      if(photo) await store.setPhoto(rid, photo);
+      await store.setCreature(id, { seen: (c.seen||0) + 1, lastSeen: document.getElementById("date").value || today() });
+      if(!c.hasPhoto && photo){ await store.setPhoto("c-" + id, photo); await store.setCreature(id, { hasPhoto:true }); }
+      toast(`${c.name} を記録しました`); location.replace("#creature/" + encodeURIComponent(id));
+    };
   },
 
   async settings(){
@@ -697,6 +806,8 @@ const view = {
 
 function itemHTML(r){
   const tid = r.treeId ? `<a href="#tree/${encodeURIComponent(r.treeId)}">木${esc(r.treeId)}</a> ${esc(r.species||"")}` : "";
+  if(r.type === "sight") return `<div class="item sight"><div>🔍 <a href="#creature/${encodeURIComponent(r.creature)}">${esc(r.creatureName||r.creature)}</a>${r.role?` <span class="role r-${esc(r.role)}">${esc(r.role)}</span>`:""} ${esc([r.amount, r.area, r.treeId ? "木"+r.treeId : ""].filter(Boolean).join("　"))}${r.hasPhoto?`<button data-p="${esc(r.id)}">📷</button>`:""}</div>
+    ${r.memo ? `<div>${esc(r.memo)}</div>` : ""}<div class="meta">${esc(md(r.date))} ${esc(r.by||"")}</div></div>`;
   if(r.type === "edit") return `<div class="item edit"><div>✏️ ${tid}</div><div>${esc(r.memo)}</div><div class="meta">${esc(md(r.date))} ${esc(r.by||"")}</div></div>`;
   const bits = r.type === "work"
     ? [ (r.tasks||[]).join("・"), r.area, (r.treeIds||[]).length ? "木 "+r.treeIds.join(", ") : "" ]
@@ -740,6 +851,9 @@ async function route0(){
   if(!me) return view.name();
   const h = decodeURIComponent(location.hash.slice(1));
   if(h.startsWith("tree/")) return view.tree(normId(h.slice(5)));
+  if(h === "creature-new") return view.creatureNew();
+  if(h.startsWith("creature/")) return view.creature(h.slice(9));
+  if(h.startsWith("sight/")) return view.sight(h.slice(6));
   if(view[h] && !["login","name","tree"].includes(h)) return view[h]();
   return view.home();
 }
