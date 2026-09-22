@@ -366,7 +366,7 @@ const view = {
     $app.innerHTML = `<div class="login">
       <h1>🦌 野生生活<br>果樹園管理</h1>
       <p>みんなの合言葉を入れてください</p>
-      <input class="field" id="pass" type="password" autocomplete="current-password" placeholder="合言葉">
+      <input class="field" id="pass" type="text" lang="ja" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="合言葉（ひらがなもOK）">
       <button class="go" id="go">はじめる</button>
       ${DEMO ? `<p class="demo" style="margin-top:20px">いまはお試しモードです。記録はこのスマホの中だけに保存されます。</p>` : ""}
     </div>`;
@@ -378,7 +378,7 @@ const view = {
       catch(e){ console.error(e); toast("つながりませんでした。電波か設定を確認してください"); document.getElementById("go").disabled = false; }
     };
     document.getElementById("go").onclick = go;
-    document.getElementById("pass").onkeydown = e => { if(e.key==="Enter") go(); };
+    document.getElementById("pass").onkeydown = e => { if(e.key==="Enter" && !e.isComposing && e.keyCode !== 229) go(); };
   },
 
   async name(){
