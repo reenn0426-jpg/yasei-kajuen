@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#263522">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>野生生活 果樹園管理</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌳</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#E9ECE1; --card:#F8F9F3; --ink:#1F2A21; --sub:#5C6A5B;
+  --moss:#3F4B43; --moss-d:#263522; --moss-soft:#D8E2CB;
+  --kaki:#6F6259; --kaki-soft:#F5DCBC; --wood:#C79B5E;
+  --sky:#3F4B43; --sky-soft:#D3E3EA; --warn:#B23A2A;
+  --r:14px;
+  font-family:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  color:var(--ink); background:var(--paper);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0;background:var(--paper)}
+body{font-size:17px;line-height:1.6;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:560px;margin:0 auto;padding:12px 16px 120px}
+[hidden]{display:none!important}
+h1,h2,h3{margin:0;line-height:1.3}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0 14px}
+.top .who{font-size:15px;color:var(--sub)}
+body.tabs .top .back{visibility:hidden}
+.back{border:0;background:none;padding:8px 4px;font-size:16px;color:var(--moss);font-weight:700;cursor:pointer}
+.iconbtn{border:0;background:var(--card);border-radius:50%;width:44px;height:44px;font-size:20px;cursor:pointer}
+.demo{background:#EFE6D8;color:#5A4632;font-size:13px;padding:6px 12px;border-radius:8px;margin-bottom:12px}
+
+/* 木ID呼び出し */
+.call{background:var(--card);color:var(--ink);border-radius:22px;padding:16px 16px 14px;margin-bottom:14px}
+.call label{display:block;font-weight:700;font-size:15px;color:var(--sub);margin-bottom:8px}
+.call-row{display:flex;gap:10px}
+.call input{flex:1;min-width:0;font-size:40px;font-weight:800;letter-spacing:.04em;text-align:center;
+  border:2px solid var(--moss-soft);border-radius:16px;padding:4px 8px;background:#fff;color:var(--ink)}
+.call button{border:0;border-radius:14px;padding:0 20px;background:var(--kaki);color:#fff;font-weight:800;font-size:18px;cursor:pointer}
+.recent{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.recent button{border:1.5px solid var(--moss-soft);background:transparent;color:var(--ink);font-weight:700;border-radius:99px;padding:4px 14px;font-size:15px;cursor:pointer}
+
+.bigbtn{display:flex;align-items:center;gap:14px;width:100%;border:0;border-radius:18px;padding:18px 20px;margin-bottom:12px;
+  font-size:19px;font-weight:700;text-align:left;cursor:pointer;background:var(--card)}
+.bigbtn .em{font-size:28px}
+.bigbtn small{display:block;font-size:13px;font-weight:500;color:var(--sub)}
+.bigbtn.work{background:var(--sky);color:#fff}
+.bigbtn.work small{color:#D3DDCF}
+
+/* 札 */
+.tagline{display:flex;align-items:center;gap:16px;margin-bottom:6px}
+.tag{position:relative;background:var(--wood);color:#2A1D0E;border-radius:10px 10px 16px 16px;min-width:88px;padding:22px 14px 10px;
+  text-align:center;font-weight:800;font-size:44px;line-height:1;box-shadow:inset 0 -4px 0 rgba(0,0,0,.12)}
+.tag::before{content:"";position:absolute;top:8px;left:50%;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:var(--paper)}
+.tagline h2{font-size:22px}
+.tagline p{margin:2px 0 0;color:var(--sub);font-size:15px}
+.last{margin:10px 0 4px;font-size:15px;background:var(--moss-soft);border-radius:10px;padding:8px 12px}
+.nocoord{color:var(--warn);font-weight:700}
+
+.sec{margin-top:22px}
+.sec h3{font-size:16px;margin-bottom:10px;color:var(--moss-d)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:2px solid var(--moss-soft);background:var(--card);border-radius:99px;padding:8px 16px;font-size:16px;cursor:pointer;min-height:44px}
+.chip[aria-pressed="true"]{background:var(--moss);border-color:var(--moss);color:#fff;font-weight:700}
+.chips.work .chip[aria-pressed="true"]{background:var(--sky);border-color:var(--sky)}
+.chips.warn .chip[aria-pressed="true"]{background:var(--kaki);border-color:var(--kaki)}
+.row{display:flex;gap:10px;align-items:center}
+.field{width:100%;border:2px solid var(--moss-soft);border-radius:12px;padding:10px 12px;background:var(--card);font-size:17px}
+textarea.field{min-height:84px;resize:vertical}
+.num{width:110px;text-align:center;font-size:20px;font-weight:700}
+.photo{display:inline-flex;align-items:center;gap:8px;border:2px dashed var(--moss);border-radius:12px;padding:10px 16px;cursor:pointer;color:var(--moss);font-weight:700}
+.photo input{display:none}
+.thumb{margin-top:10px;max-width:160px;border-radius:10px;display:block}
+.gps{border:2px solid var(--kaki);background:var(--card);color:var(--kaki);border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer}
+.gpsnote{font-size:14px;color:var(--sub);margin-top:6px}
+
+.save{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(to top,var(--paper) 70%,rgba(233,236,225,0));z-index:5}
+.save button{display:block;width:100%;max-width:528px;margin:0 auto;border:0;border-radius:16px;padding:16px;font-size:20px;font-weight:800;
+  background:var(--kaki);color:#fff;cursor:pointer}
+.save button.work{background:var(--sky)}
+
+/* 記録一覧 */
+.day{margin-top:18px;font-weight:700;color:var(--sub);font-size:14px}
+.item{background:var(--card);border-radius:12px;padding:10px 14px;margin-top:8px;border-left:5px solid var(--moss)}
+.item.work{border-left-color:var(--sky)}
+.item .meta{font-size:13px;color:var(--sub)}
+.item a{color:var(--moss-d);font-weight:700}
+.item button{border:0;background:var(--moss-soft);border-radius:8px;padding:2px 10px;font-size:14px;margin-left:6px;cursor:pointer}
+.empty{color:var(--sub);text-align:center;padding:30px 10px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.cell{border:0;background:var(--card);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer}
+.cell b{display:block;font-size:24px;font-weight:800}
+.cell span{font-size:12px;color:var(--sub)}
+.cell.nc{outline:2px dashed var(--warn)}
+.filter{margin-bottom:12px}
+
+.hero{position:relative;height:270px;display:flex;flex-direction:column;color:#fff;border-radius:0 0 28px 28px;margin:-12px -16px 14px;padding:18px 20px 0;overflow:hidden;overflow:clip;
+  background:#3E5631 center/cover no-repeat}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start}
+.hero .who{color:#EEF3E6;margin:0;font-weight:700;font-size:14px}
+.hero h1{font-size:32px;font-weight:800;line-height:1.15;letter-spacing:.04em;margin-top:2px;text-shadow:0 2px 12px rgba(10,20,8,.55)}
+.hero .iconbtn{background:rgba(16,30,14,.45);color:#fff}
+.field-line{position:relative;flex-grow:1;margin:0 -20px}
+.walker{position:absolute;bottom:4px;left:0;width:84px;cursor:pointer;animation:stroll 26s linear infinite}
+@media (prefers-reduced-motion:reduce){.walker{animation:none;left:55%}}
+.deer{width:84px;display:block}
+.deer .fur{fill:#B07A45}.deer .leg rect{fill:#8E5E32}
+.say{position:absolute;bottom:74px;box-shadow:0 2px 8px rgba(0,0,0,.15);left:50%;transform:translateX(-50%);white-space:nowrap;background:#fff;color:var(--ink);font-size:13px;font-weight:700;padding:4px 10px;border-radius:12px}
+@media (prefers-reduced-motion:no-preference){
+  .deer .leg{transform-box:fill-box;transform-origin:50% 0;animation:step .5s ease-in-out infinite alternate}
+  .deer .l2,.deer .l3{animation-delay:-.25s}
+  .deer .eye{transform-box:fill-box;transform-origin:center;animation:blink 4.5s infinite}
+  .deer .ear{transform-box:fill-box;transform-origin:50% 100%;animation:ear 6s infinite}
+  .deer .d-head{transform-box:fill-box;transform-origin:20% 90%;animation:graze 26s ease-in-out infinite}
+  .deer{animation:face 26s linear infinite}
+  .walker.hop .d-body{animation:hop .5s ease-out}
+}
+@media (prefers-reduced-motion:reduce){.walker{animation:none;left:60%}}
+@keyframes stroll{0%{left:-90px}46%,50%{left:calc(100% + 10px)}96%,100%{left:-90px}}
+@keyframes face{0%,47.9%{transform:scaleX(1)}48%,97.9%{transform:scaleX(-1)}98%,100%{transform:scaleX(1)}}
+@keyframes step{from{transform:rotate(-14deg)}to{transform:rotate(14deg)}}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+@keyframes ear{0%,88%,100%{transform:rotate(0)}92%{transform:rotate(-18deg)}96%{transform:rotate(8deg)}}
+@keyframes graze{0%,20%,30%,100%{transform:rotate(0)}24%,27%{transform:rotate(38deg)}}
+@keyframes hop{0%{transform:translateY(0)}40%{transform:translateY(-26px)}100%{transform:translateY(0)}}
+.edit{margin-top:14px;background:var(--card);border-radius:14px;padding:10px 14px}
+.edit summary{font-weight:700;color:var(--moss-d);cursor:pointer;min-height:36px;display:flex;align-items:center}
+.edit .sec{margin-top:12px}
+.item.edit{border-left-color:var(--wood)}
+.mapbox{overflow:auto;border-radius:16px;background:#E3E9D6;margin-top:8px;max-height:70vh;-webkit-overflow-scrolling:touch}
+.mapbox svg{display:block;min-width:100%}
+.mapbox .grid line{stroke:#fff;stroke-width:.15;opacity:.7}
+.mapbox .scale line{stroke:#2E3F2A;stroke-width:.5}.mapbox .scale text{fill:#2E3F2A}
+.mapbox .pin{cursor:pointer}
+.maptools{display:flex;gap:8px;margin-top:10px}.maptools .gps{padding:8px 14px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:14px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:space-around;background:var(--card);
+  border-top:1px solid var(--moss-soft);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
+.tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;text-decoration:none;color:var(--sub);font-size:12px;font-weight:700;padding:4px 0;min-height:52px;border-radius:12px}
+.tabbar a span{font-size:22px;line-height:1.2;filter:grayscale(1);opacity:.7}
+.tabbar a[aria-current="page"]{color:var(--moss-d);background:var(--moss-soft)}
+.tabbar a[aria-current="page"] span{filter:none;opacity:1}
+.recent-h{font-size:16px;color:var(--moss-d);margin:6px 0 0}
+.area{margin-top:22px}
+.area h3{display:flex;justify-content:space-between;align-items:baseline;font-size:18px;color:var(--moss-d);border-bottom:2px solid var(--moss-soft);padding-bottom:6px}
+.area h3 span{font-size:14px;color:var(--sub);font-weight:500}
+.kinds{font-size:13px;color:var(--sub);margin:6px 0 8px}
+.trow{display:flex;align-items:center;gap:12px;width:100%;border:0;background:var(--card);border-radius:12px;padding:8px 12px;margin-top:6px;text-align:left;cursor:pointer;min-height:52px}
+.mini{flex:none;min-width:44px;text-align:center;background:var(--wood);color:#2A1D0E;border-radius:6px 6px 9px 9px;font-weight:800;font-size:18px;padding:4px 6px}
+.mini.nc{background:transparent;outline:2px dashed var(--warn);color:var(--warn)}
+.tname{flex:1;font-weight:700;font-size:16px;line-height:1.35}
+.tname small{display:block;font-weight:500;font-size:13px;color:var(--sub)}
+.pill{flex:none;font-size:13px;background:var(--moss-soft);border-radius:99px;padding:2px 10px;color:var(--moss-d)}
+.pill:empty{display:none}
+.crit{background:var(--card);border-radius:12px;padding:10px 14px;margin-top:8px}
+.crit p{margin:4px 0 0;font-size:15px;color:#3A463A}
+.cname{font-weight:700;font-size:17px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.role{font-size:12px;font-weight:700;border-radius:99px;padding:1px 10px;background:var(--moss-soft);color:var(--moss-d)}
+.r-益虫{background:var(--moss);color:#fff}.r-受粉者{background:var(--kaki-soft);color:#7A4312}.r-害虫{background:var(--warn);color:#fff}
+.login{padding-top:12vh;text-align:center}
+.login h1{font-size:30px;font-weight:800;color:var(--moss-d)}
+.login p{color:var(--sub)}
+.login .field{text-align:center;font-size:22px;margin:18px 0 12px}
+.login .go{width:100%;border:0;border-radius:14px;padding:14px;background:var(--moss);color:#fff;font-size:19px;font-weight:700;cursor:pointer}
+.names{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.names button{border:0;background:var(--card);border-radius:14px;padding:14px;font-size:19px;font-weight:700;cursor:pointer}
+.plain{border:0;background:none;color:var(--moss);font-weight:700;padding:10px;cursor:pointer;font-size:16px}
+.setbtn{display:block;width:100%;text-align:left;border:0;background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:10px;font-size:17px;cursor:pointer}
+.setbtn small{display:block;color:var(--sub);font-size:13px}
+
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;
+  font-size:15px;z-index:20;max-width:90vw;text-align:center}
+.modal{position:fixed;inset:0;background:rgba(20,28,20,.85);display:flex;align-items:center;justify-content:center;z-index:30;padding:20px}
+.modal img{max-width:100%;max-height:80vh;border-radius:12px}
+:focus-visible{outline:3px solid var(--kaki);outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){.chip{transition:background .12s}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script type="module">
+/* ===== ここだけ書き換える：Firebaseの設定 =====
+   Firebaseコンソール → プロジェクトの設定 → マイアプリ（ウェブ）の firebaseConfig を貼り付け。
+   apiKey が空のままだと「お試しモード」（この端末だけに保存）で動きます。 */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB8OOR5JOIxDArm4yXUosEFHVjcJQblMpw",
+  authDomain: "yasei-kajuen.firebaseapp.com",
+  projectId: "yasei-kajuen",
+  storageBucket: "yasei-kajuen.firebasestorage.app",
+  messagingSenderId: "526909633105",
+  appId: "1:526909633105:web:cc7ec49a66f5e26fe1be70"
+};
+/* ============================================ */
+
+const DEMO = !FIREBASE_CONFIG.apiKey;
+const NAV_TABS = true; // true にすると画面下のタブで移動する形になる
+const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
+
+const STAGES = ["芽吹き","つぼみ","開花","実がついた","色づき","食べごろ","紅葉","落葉","休眠"];
+const CONCERNS = ["元気","虫","病気","獣害","枝折れ","弱ってる"];
+const TASKS = ["草刈り","ネット修理","剪定","施肥","水やり","獣害対策","植え付け","収穫","片付け","見回り","その他"];
+const AREAS = ["山の東エリア","山の西エリア","野下家","全体"];
+const UNITS = ["個","kg","かご"];
+/* 季節のヘッダー画像：月ごとに img/hero-◯◯.jpg を使う（画像を足したらここに書き足す） */
+const SEASON_BY_MONTH = {10:"autumn", 11:"autumn", 12:"autumn"};
+function heroSeason(){
+  const q = new URLSearchParams(location.search).get("season"); if(q) return q;
+  return SEASON_BY_MONTH[new Date().getMonth()+1] || "summer";
+}
+function paintHero(el){
+  const scrim = "linear-gradient(180deg,rgba(16,30,14,.66) 0%,rgba(16,30,14,.32) 42%,rgba(16,30,14,0) 68%)";
+  const set = n => el.style.backgroundImage = `${scrim},url(img/hero-${n}.jpg)`;
+  const want = heroSeason(); set(want);
+  if(want !== "summer"){ const i = new Image(); i.onerror = () => set("summer"); i.src = `img/hero-${want}.jpg`; }
+}
+
+const $app = document.getElementById("app");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today = () => new Date().toLocaleDateString("sv-SE");
+const md = d => { const [,m,dd] = (d||"").split("-"); return m ? `${+m}/${+dd}` : ""; };
+const normId = s => { const t = String(s ?? "").normalize("NFKC").trim(); return /^\d+$/.test(t) ? String(parseInt(t,10)) : t; };
+const byNew = (a,b) => (b.date||"").localeCompare(a.date||"") || (b.createdAt||0) - (a.createdAt||0);
+const LS = { get:k=>{try{return localStorage.getItem(k)}catch{return null}}, set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}}, del:k=>{try{localStorage.removeItem(k)}catch{}} };
+
+function toast(msg, ms=2200){ const t=document.getElementById("toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true, ms); }
+
+async function hashKey(pass){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("kajuen:" + pass.normalize("NFKC").trim()));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("").slice(0,32);
+}
+
+/* ---------- 保存先：お試し（端末内） ---------- */
+function localStore(key){
+  const K = "kajuen-demo-" + key;
+  const load = () => { try { return JSON.parse(localStorage.getItem(K)) || {}; } catch { return {}; } };
+  const db = () => { const d = load(); d.trees ||= {}; d.records ||= {}; d.photos ||= {}; d.members ||= {}; d.creatures ||= {}; return d; };
+  const save = d => { try { localStorage.setItem(K, JSON.stringify(d)); } catch { toast("端末の保存容量がいっぱいです（お試しモード）"); } };
+  return {
+    async getTree(id){ return db().trees[id] || null; },
+    async setTree(id, data){ const d=db(); d.trees[id] = {...(d.trees[id]||{}), ...data, id}; save(d); },
+    async allTrees(){ return Object.values(db().trees); },
+    async addRecord(r){ const d=db(); const id="r"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); d.records[id]={...r,id,createdAt:Date.now()}; save(d); return id; },
+    async setPhoto(id, data){ const d=db(); d.photos[id]=data; save(d); },
+    async getPhoto(id){ return db().photos[id] || null; },
+    async recordsForTree(t){ return Object.values(db().records).filter(r=>r.treeId===t || (r.treeIds||[]).includes(t)).sort(byNew); },
+    async recentRecords(n){ return Object.values(db().records).sort(byNew).slice(0,n); },
+    async allRecords(){ return Object.values(db().records).sort(byNew); },
+    async allCreatures(){ return Object.values(db().creatures); },
+    async setCreature(id, data){ const d=db(); d.creatures[id] = {...(d.creatures[id]||{}), ...data, id}; save(d); },
+    async members(){ return Object.keys(db().members).sort(); },
+    async addMember(n){ const d=db(); d.members[n]=true; save(d); }
+  };
+}
+
+/* ---------- 保存先：Firebase（みんなで共有） ---------- */
+async function fireStore(key){
+  const { initializeApp } = await import(FB+"firebase-app.js");
+  const { getAuth, signInAnonymously, onAuthStateChanged } = await import(FB+"firebase-auth.js");
+  const F = await import(FB+"firebase-firestore.js");
+  const app = initializeApp(FIREBASE_CONFIG);
+  const auth = getAuth(app);
+  await new Promise(r => { const off = onAuthStateChanged(auth, () => { off(); r(); }); });
+  if(!auth.currentUser) await signInAnonymously(auth);
+  let db;
+  try { db = F.initializeFirestore(app, { localCache: F.persistentLocalCache({ tabManager: F.persistentMultipleTabManager() }) }); }
+  catch { db = F.getFirestore(app); }
+  const col = c => F.collection(db, "o", key, c);
+  const ref = (c,id) => F.doc(db, "o", key, c, id);
+  const out = s => { const v = s.data(); return { ...v, id: s.id, createdAt: v.createdAt?.toMillis?.() ?? v.clientAt ?? 0 }; };
+  // 書き込みは待たない：電波が弱くても端末に貯めて、つながったら自動で送られる
+  const fire = p => p.catch(e => { console.error(e); toast("保存に失敗しました：" + (e.code || e.message)); });
+  return {
+    async getTree(id){ try { const s = await F.getDoc(ref("trees",id)); return s.exists() ? {...s.data(), id:s.id} : null; } catch { const s = await F.getDocFromCache(ref("trees",id)).catch(()=>null); return s?.exists() ? {...s.data(), id:s.id} : null; } },
+    async setTree(id, data){ fire(F.setDoc(ref("trees",id), {...data, id}, {merge:true})); },
+    async allTrees(){ const q = await F.getDocs(col("trees")); return q.docs.map(d=>({...d.data(), id:d.id})); },
+    async addRecord(r){ const d = F.doc(col("records")); fire(F.setDoc(d, {...r, clientAt:Date.now(), createdAt:F.serverTimestamp()})); return d.id; },
+    async setPhoto(id, data){ fire(F.setDoc(ref("photos",id), {data})); },
+    async getPhoto(id){ const s = await F.getDoc(ref("photos",id)); return s.exists() ? s.data().data : null; },
+    async recordsForTree(t){
+      const [a,b] = await Promise.all([
+        F.getDocs(F.query(col("records"), F.where("treeId","==",t))),
+        F.getDocs(F.query(col("records"), F.where("treeIds","array-contains",t)))
+      ]);
+      const m = new Map(); [...a.docs, ...b.docs].forEach(d=>m.set(d.id, out(d)));
+      return [...m.values()].sort(byNew);
+    },
+    async recentRecords(n){ const q = await F.getDocs(F.query(col("records"), F.orderBy("createdAt","desc"), F.limit(n))); return q.docs.map(out).sort(byNew); },
+    async allRecords(){ const q = await F.getDocs(col("records")); return q.docs.map(out).sort(byNew); },
+    async allCreatures(){ const q = await F.getDocs(col("creatures")); return q.docs.map(d=>({...d.data(), id:d.id})); },
+    async setCreature(id, data){ fire(F.setDoc(ref("creatures",id), {...data, id}, {merge:true})); },
+    async members(){ const q = await F.getDocs(col("members")); return q.docs.map(d=>d.id).sort(); },
+    async addMember(n){ await F.setDoc(ref("members",n), {addedAt:Date.now()}); }
+  };
+}
+
+let store = null, me = LS.get("kajuen.name") || "";
+let treeCache = null;
+async function trees(force){ if(!treeCache || force) treeCache = await store.allTrees(); return treeCache; }
+const treeTitle = t => [t.species || "種類未登録", t.variety].filter(Boolean).join("・");
+
+/* ---------- 写真を小さくする（1枚だいたい100〜200KB） ---------- */
+function shrink(file, max=1100, q=0.62){
+  return new Promise((res, rej) => {
+    const img = new Image(); const url = URL.createObjectURL(file);
+    img.onload = () => { const s = Math.min(1, max/Math.max(img.width,img.height)); const c = document.createElement("canvas");
+      c.width = Math.round(img.width*s); c.height = Math.round(img.height*s); c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url); res(c.toDataURL("image/jpeg", q)); };
+    img.onerror = rej; img.src = url;
+  });
+}
+
+function chips(list, name, {multi=false, cls=""}={}){
+  return `<div class="chips ${cls}" data-group="${name}" data-multi="${multi}">${list.map(v=>`<button type="button" class="chip" aria-pressed="false" data-v="${esc(v)}">${esc(v)}</button>`).join("")}</div>`;
+}
+function wireChips(root){
+  root.querySelectorAll(".chips").forEach(g => g.addEventListener("click", e => {
+    const b = e.target.closest(".chip"); if(!b) return;
+    const on = b.getAttribute("aria-pressed") !== "true";
+    if(g.dataset.multi !== "true") g.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed", String(on));
+  }));
+}
+const picked = (root, name) => [...root.querySelectorAll(`[data-group="${name}"] .chip[aria-pressed="true"]`)].map(b=>b.dataset.v);
+
+function photoField(root){
+  const inp = root.querySelector(".photo input"), th = root.querySelector(".thumb");
+  let data = null;
+  inp.addEventListener("change", async () => { const f = inp.files[0]; if(!f) return;
+    try { data = await shrink(f); th.src = data; th.hidden = false; } catch { toast("写真を読み込めませんでした"); } });
+  return () => data;
+}
+
+/* ---------- 画面 ---------- */
+const view = {
+  async login(){
+    $app.innerHTML = `<div class="login">
+      <h1>🦌 野生生活<br>果樹園管理</h1>
+      <p>みんなの合言葉を入れてください</p>
+      <input class="field" id="pass" type="password" autocomplete="current-password" placeholder="合言葉">
+      <button class="go" id="go">はじめる</button>
+      ${DEMO ? `<p class="demo" style="margin-top:20px">いまはお試しモードです。記録はこのスマホの中だけに保存されます。</p>` : ""}
+    </div>`;
+    const go = async () => {
+      const p = document.getElementById("pass").value;
+      if(p.trim().length < 4){ toast("合言葉は4文字以上で"); return; }
+      document.getElementById("go").disabled = true;
+      try { const key = await hashKey(p); await connect(key); LS.set("kajuen.key", key); route(); }
+      catch(e){ console.error(e); toast("つながりませんでした。電波か設定を確認してください"); document.getElementById("go").disabled = false; }
+    };
+    document.getElementById("go").onclick = go;
+    document.getElementById("pass").onkeydown = e => { if(e.key==="Enter") go(); };
+  },
+
+  async name(){
+    const list = await store.members().catch(()=>[]);
+    $app.innerHTML = `<div class="login">
+      <h1>だれが使いますか？</h1>
+      <div class="names">${list.map(n=>`<button data-n="${esc(n)}">${esc(n)}</button>`).join("")}</div>
+      <input class="field" id="nn" placeholder="新しい名前" maxlength="20">
+      <button class="go" id="add">この名前で使う</button>
+    </div>`;
+    $app.querySelectorAll("[data-n]").forEach(b => b.onclick = () => { me = b.dataset.n; LS.set("kajuen.name", me); location.hash = "#home"; route(); });
+    document.getElementById("add").onclick = async () => {
+      const n = document.getElementById("nn").value.trim(); if(!n){ toast("名前を入れてください"); return; }
+      await store.addMember(n); me = n; LS.set("kajuen.name", me); location.hash = "#home"; route();
+    };
+  },
+
+  async home(){
+    const recent = JSON.parse(LS.get("kajuen.recent") || "[]");
+    $app.innerHTML = `
+      ${DEMO ? `<div class="demo">お試しモード：記録はこのスマホの中だけ</div>` : ""}
+      <header class="hero">
+        <div class="hero-top"><div><p class="who">${esc(md(today()))}　${esc(me)}さん</p><h1>野生生活<br>果樹園管理</h1></div>
+          <button class="iconbtn" aria-label="設定" onclick="location.hash='#settings'">⚙️</button></div>
+        <div class="field-line"><div class="walker" id="walker"><svg class="deer" viewBox="0 0 120 100" aria-hidden="true">
+  <g class="d-body">
+    <g class="leg l1"><rect x="36" y="62" width="7" height="26" rx="3"/></g>
+    <g class="leg l2"><rect x="48" y="62" width="7" height="26" rx="3"/></g>
+    <g class="leg l3"><rect x="72" y="62" width="7" height="26" rx="3"/></g>
+    <g class="leg l4"><rect x="84" y="62" width="7" height="26" rx="3"/></g>
+    <ellipse class="fur" cx="62" cy="56" rx="34" ry="17"/>
+    <ellipse cx="29" cy="49" rx="6" ry="5" fill="#F4EBDD"/>
+    <circle cx="52" cy="50" r="2.6" fill="#F4EBDD"/><circle cx="64" cy="47" r="2.2" fill="#F4EBDD"/>
+    <circle cx="74" cy="53" r="2.6" fill="#F4EBDD"/><circle cx="58" cy="58" r="2" fill="#F4EBDD"/>
+    <g class="d-head">
+      <rect class="fur" x="84" y="30" width="12" height="26" rx="6"/>
+      <ellipse class="fur ear e1" cx="92" cy="20" rx="4" ry="8" transform="rotate(-35 92 20)"/>
+      <ellipse class="fur ear e2" cx="110" cy="20" rx="4" ry="8" transform="rotate(35 110 20)"/>
+      <ellipse class="fur" cx="101" cy="30" rx="13" ry="11"/>
+      <ellipse cx="110" cy="35" rx="6" ry="4.5" fill="#F4EBDD"/>
+      <circle cx="115" cy="33" r="2.2" fill="#2A1D0E"/>
+      <g class="eye"><circle cx="101" cy="27" r="2.6" fill="#2A1D0E"/><circle cx="102" cy="26" r=".9" fill="#fff"/></g>
+    </g>
+  </g>
+</svg><span class="say" id="say" hidden></span></div></div>
+      </header>
+      <div class="call">
+        <label for="tid">木IDを入れて呼び出す</label>
+        <div class="call-row"><input id="tid" inputmode="numeric" autocomplete="off" placeholder="番号"><button id="open">開く</button></div>
+        ${recent.length ? `<div class="recent">${recent.map(i=>`<button data-t="${esc(i)}">${esc(i)}</button>`).join("")}</div>` : ""}
+      </div>
+      <button class="bigbtn work" onclick="location.hash='#work'"><span class="em">🛠</span><span>今日の作業<small>草刈り・ネット修理・剪定など</small></span></button>
+      ${NAV_TABS ? `<h3 class="recent-h">最近の記録</h3><div id="recent3"><p class="empty">読み込み中…</p></div>` : `
+      <button class="bigbtn" onclick="location.hash='#log'"><span class="em">📖</span><span>みんなの記録<small>最近の記録を日付順に</small></span></button>
+      <button class="bigbtn" onclick="location.hash='#map'"><span class="em">📍</span><span>果樹園マップ<small>どこにどの木があるか地図で見る</small></span></button>
+      <button class="bigbtn" onclick="location.hash='#areas'"><span class="em">🗺</span><span>エリアごとの果樹<small>東・西・野下家の木と、いまの様子</small></span></button>
+      <button class="bigbtn" onclick="location.hash='#creatures'"><span class="em">🐞</span><span>生き物図鑑<small>益虫・害虫・草花の見分けメモ</small></span></button>`}`;
+    if(NAV_TABS) store.recentRecords(4).then(l => { const el = document.getElementById("recent3"); if(!el) return;
+      el.innerHTML = l.length ? l.map(itemHTML).join("") : `<p class="empty">まだ記録がありません</p>`; wirePhotos(el); }).catch(()=>{});
+    const open = () => { const v = normId(document.getElementById("tid").value); if(v) location.hash = "#tree/" + encodeURIComponent(v); };
+    document.getElementById("open").onclick = open;
+    document.getElementById("tid").onkeydown = e => { if(e.key==="Enter") open(); };
+    $app.querySelectorAll("[data-t]").forEach(b => b.onclick = () => location.hash = "#tree/" + encodeURIComponent(b.dataset.t));
+    paintHero($app.querySelector(".hero"));
+    const w = document.getElementById("walker"), say = document.getElementById("say");
+    const lines = ["今日はなにを記録する？","実の色、変わってた？","草刈りおつかれさま！","座標がまだの木があるよ","秋の山はたのしいね"];
+    w.onclick = () => { w.classList.remove("hop"); void w.offsetWidth; w.classList.add("hop");
+      say.textContent = lines[Math.floor(Math.random()*lines.length)]; say.hidden = false; clearTimeout(w._t); w._t = setTimeout(()=>say.hidden=true, 2600); };
+  },
+
+  async tree(id){
+    const t = await store.getTree(id);
+    if(!t){
+      $app.innerHTML = `<div class="top"><button class="back" onclick="location.hash='#home'">← もどる</button></div>
+        <div class="tagline"><div class="tag">${esc(id)}</div><div><h2>台帳にない木です</h2><p>番号を確かめるか、新しい木として登録できます</p></div></div>
+        <div class="sec"><h3>種類</h3><input class="field" id="sp" placeholder="例：リンゴ"></div>
+        <div class="sec"><h3>品種（分かれば）</h3><input class="field" id="va" placeholder="例：ふじ"></div>
+        <div class="sec"><h3>場所</h3>${chips(AREAS.slice(0,3),"area")}</div>
+        <div class="save"><button id="reg">この木を登録する</button></div>`;
+      wireChips($app);
+      document.getElementById("reg").onclick = async () => {
+        await store.setTree(id, { species: document.getElementById("sp").value.trim(), variety: document.getElementById("va").value.trim(),
+          area: picked($app,"area")[0] || "", addedBy: me, addedAt: today() });
+        treeCache = null; toast(`木 ${id} を登録しました`); view.tree(id);
+      };
+      return;
+    }
+    const rec = JSON.parse(LS.get("kajuen.recent") || "[]").filter(x=>x!==id); rec.unshift(id); LS.set("kajuen.recent", JSON.stringify(rec.slice(0,6)));
+    const hasCoord = t.lat != null && t.lng != null;
+    $app.innerHTML = `
+      <div class="top"><button class="back" onclick="location.hash='#home'">← もどる</button><span class="who">${esc(me)}さん</span></div>
+      <div class="tagline"><div class="tag">${esc(id)}</div><div><h2>${esc(treeTitle(t))}</h2>
+        <p>${esc([t.area, t.memo].filter(Boolean).join("　"))}</p></div></div>
+      <div class="last" id="last">${t.lastStage ? `前回：${esc(t.lastStage)}（${esc(md(t.lastAt))} ${esc(t.lastBy||"")}）` : (t.status ? `台帳の状態：${esc(t.status)}（この木の記録はまだありません）` : "まだ記録がありません")}</div>
+      <details class="edit" ${t.species ? "" : "open"}><summary>${t.species ? "✏️ 木の情報を直す" : "✏️ 種類がまだです。分かったら入れてください"}</summary>
+        <div class="sec"><h3>種類</h3><input class="field" id="e-sp" list="splist" value="${esc(t.species||"")}" placeholder="例：リンゴ"><datalist id="splist"></datalist></div>
+        <div class="sec"><h3>品種</h3><input class="field" id="e-va" value="${esc(t.variety||"")}" placeholder="分からなければ空でOK"></div>
+        <div class="sec"><h3>場所</h3>${chips(AREAS.slice(0,3),"e-area")}</div>
+        <div class="sec"><h3>位置メモ</h3><input class="field" id="e-memo" value="${esc(t.memo||"")}" placeholder="例：右・奥・中庭左"></div>
+        <button class="gps" id="e-save" style="margin-top:14px">この内容で直す</button>
+      </details>
+      <div class="sec"><h3>日付</h3><input class="field" type="date" id="date" value="${today()}" style="max-width:200px"></div>
+      <div class="sec"><h3>今の様子</h3>${chips(STAGES,"stage")}</div>
+      <div class="sec"><h3>気になること</h3>${chips(CONCERNS,"concern",{multi:true,cls:"warn"})}</div>
+      <div class="sec"><h3>収穫したら</h3><div class="row"><input class="field num" id="amt" type="number" inputmode="decimal" min="0" step="any" placeholder="0">
+        <select class="field" id="unit" style="width:auto">${UNITS.map(u=>`<option>${u}</option>`).join("")}</select></div></div>
+      <div class="sec"><h3>写真</h3><label class="photo">📷 写真をとる<input type="file" accept="image/*" capture="environment"></label><img class="thumb" hidden alt=""></div>
+      <div class="sec"><h3>メモ</h3><textarea class="field" id="memo" placeholder="気づいたこと"></textarea></div>
+      <div class="sec"><h3>位置</h3>
+        <p class="gpsnote" id="gpsnote">${hasCoord ? `登録済み（${t.lat.toFixed(6)}, ${t.lng.toFixed(6)}${t.acc?` ±${Math.round(t.acc)}m`:""}）` : `<span class="nocoord">座標がまだありません</span>`}</p>
+        <button class="gps" id="gps">📍 木の横で、ここの座標を記録</button></div>
+      <div class="sec"><h3>これまでの記録</h3><div id="hist"><p class="empty">読み込み中…</p></div></div>
+      <div class="save"><button id="save">記録する</button></div>`;
+    wireChips($app);
+    const getPhoto = photoField($app);
+    if(t.area) $app.querySelector(`[data-group="e-area"] [data-v="${CSS.escape(t.area)}"]`)?.setAttribute("aria-pressed","true");
+    trees().then(all => { const set = [...new Set(all.map(x=>x.species).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));
+      document.getElementById("splist").innerHTML = set.map(v=>`<option value="${esc(v)}">`).join(""); }).catch(()=>{});
+    document.getElementById("e-save").onclick = async () => {
+      const upd = { species: document.getElementById("e-sp").value.trim(), variety: document.getElementById("e-va").value.trim(),
+        memo: document.getElementById("e-memo").value.trim(), area: picked($app,"e-area")[0] || t.area || "", editedBy: me, editedAt: today() };
+      await store.setTree(id, upd);
+      const changed = ["species","variety","area","memo"].filter(k => (t[k]||"") !== upd[k]);
+      if(changed.length) await store.addRecord({ type:"edit", date: today(), by: me, treeId: id, species: upd.species,
+        memo: "台帳を修正：" + changed.map(k => ({species:"種類",variety:"品種",area:"場所",memo:"位置メモ"}[k]) + "「" + (t[k]||"なし") + "→" + (upd[k]||"なし") + "」").join(" ") });
+      treeCache = null; toast(`木 ${id} の情報を直しました`); view.tree(id);
+    };
+
+    document.getElementById("gps").onclick = () => {
+      if(!navigator.geolocation){ toast("このスマホでは位置が取れません"); return; }
+      if(hasCoord && !confirm("もう座標があります。上書きしますか？")) return;
+      const note = document.getElementById("gpsnote"); note.textContent = "位置を測っています…（少し待ってください）";
+      navigator.geolocation.getCurrentPosition(async p => {
+        const { latitude:lat, longitude:lng, accuracy:acc } = p.coords;
+        await store.setTree(id, { lat, lng, acc, coordBy: me, coordAt: today() }); treeCache = null;
+        note.textContent = `記録しました（±${Math.round(acc)}m）` + (acc > 15 ? "　誤差が大きいので、空が開けた所でもう一度がおすすめ" : "");
+      }, e => { note.textContent = "位置が取れませんでした：" + (e.code===1 ? "位置情報の許可をオンにしてください" : "もう一度試してください"); },
+      { enableHighAccuracy:true, timeout:25000, maximumAge:0 });
+    };
+
+    document.getElementById("save").onclick = async () => {
+      const stage = picked($app,"stage")[0] || "", concerns = picked($app,"concern");
+      const amt = parseFloat(document.getElementById("amt").value), memo = document.getElementById("memo").value.trim();
+      const photo = getPhoto(), date = document.getElementById("date").value || today();
+      if(!stage && !concerns.length && !(amt>0) && !memo && !photo){ toast("様子・気になること・収穫・メモ・写真のどれかを入れてください"); return; }
+      const r = { type:"tree", date, by: me, treeId: id, species: t.species||"", stage, concerns, memo, hasPhoto: !!photo };
+      if(amt > 0) r.harvest = { amount: amt, unit: document.getElementById("unit").value };
+      const rid = await store.addRecord(r);
+      if(photo) await store.setPhoto(rid, photo);
+      if(stage && (!t.lastAt || date >= t.lastAt)) await store.setTree(id, { lastStage: stage, lastAt: date, lastBy: me });
+      toast(`木 ${id} を記録しました`); location.hash = "#home";
+    };
+
+    store.recordsForTree(id).then(list => {
+      const h = document.getElementById("hist"); if(!h) return;
+      h.innerHTML = list.length ? list.slice(0,30).map(itemHTML).join("") : `<p class="empty">この木の記録はまだありません</p>`;
+      wirePhotos(h);
+    }).catch(() => { const h = document.getElementById("hist"); if(h) h.innerHTML = `<p class="empty">電波が戻ったら表示されます</p>`; });
+  },
+
+  async work(){
+    $app.innerHTML = `
+      <div class="top"><button class="back" onclick="location.hash='#home'">← もどる</button><span class="who">${esc(me)}さん</span></div>
+      <h2>🛠 今日の作業</h2>
+      <div class="sec"><h3>日付</h3><input class="field" type="date" id="date" value="${today()}" style="max-width:200px"></div>
+      <div class="sec"><h3>やったこと（いくつでも）</h3>${chips(TASKS,"task",{multi:true,cls:"work"})}</div>
+      <div class="sec"><h3>場所</h3>${chips(AREAS,"area",{cls:"work"})}</div>
+      <div class="sec"><h3>木ID（特定の木なら）</h3><input class="field" id="tids" placeholder="例：12, 15, 16"></div>
+      <div class="sec"><h3>写真</h3><label class="photo">📷 写真をとる<input type="file" accept="image/*" capture="environment"></label><img class="thumb" hidden alt=""></div>
+      <div class="sec"><h3>メモ</h3><textarea class="field" id="memo" placeholder="例：東エリア下のネット、2か所破れてたのを直した"></textarea></div>
+      <div class="save"><button class="work" id="save">作業を記録する</button></div>`;
+    wireChips($app);
+    const getPhoto = photoField($app);
+    document.getElementById("save").onclick = async () => {
+      const tasks = picked($app,"task"); if(!tasks.length){ toast("やったことを1つ以上選んでください"); return; }
+      const treeIds = document.getElementById("tids").value.split(/[,、\s]+/).map(normId).filter(Boolean);
+      const photo = getPhoto();
+      const rid = await store.addRecord({ type:"work", date: document.getElementById("date").value || today(), by: me, tasks,
+        area: picked($app,"area")[0] || "", treeIds, memo: document.getElementById("memo").value.trim(), hasPhoto: !!photo });
+      if(photo) await store.setPhoto(rid, photo);
+      toast("作業を記録しました"); location.hash = "#home";
+    };
+  },
+
+  async log(){
+    $app.innerHTML = `<div class="top"><button class="back" onclick="location.hash='#home'">← もどる</button></div><h2>📖 みんなの記録</h2><div id="list"><p class="empty">読み込み中…</p></div>`;
+    try {
+      const list = await store.recentRecords(150); const el = document.getElementById("list");
+      if(!list.length){ el.innerHTML = `<p class="empty">まだ記録がありません。木IDを呼び出すか、今日の作業から記録してみてください。</p>`; return; }
+      let html = "", cur = "";
+      for(const r of list){ if(r.date !== cur){ cur = r.date; html += `<div class="day">${esc(r.date)}</div>`; } html += itemHTML(r); }
+      el.innerHTML = html; wirePhotos(el);
+    } catch { document.getElementById("list").innerHTML = `<p class="empty">電波が戻ったら表示されます</p>`; }
+  },
+
+  async areas(){
+    $app.innerHTML = `<div class="top"><button class="back" onclick="location.hash='#home'">← もどる</button></div><h2>🗺 エリアごとの果樹</h2>
+      <div class="filter" style="margin-top:12px">${chips(["座標がまだの木だけ","種類がまだの木だけ"],"nc",{multi:true})}</div><div id="areas"><p class="empty">読み込み中…</p></div>`;
+    wireChips($app);
+    const all = (await trees(true)).sort((a,b)=>(+a.id||1e9)-(+b.id||1e9) || String(a.id).localeCompare(String(b.id)));
+    const order = [...AREAS.slice(0,3)]; all.forEach(t => { const k = t.area || "エリア未設定"; if(!order.includes(k)) order.push(k); });
+    const draw = () => {
+      const pk = picked($app,"nc"), onlyNc = pk.includes("座標がまだの木だけ"), onlyNs = pk.includes("種類がまだの木だけ");
+      const html = order.map(area => {
+        const inArea = all.filter(t => (t.area || "エリア未設定") === area); if(!inArea.length) return "";
+        const nc = inArea.filter(t => t.lat == null).length;
+        const list = inArea.filter(t => (!onlyNc || t.lat == null) && (!onlyNs || !t.species)); if(!list.length) return "";
+        const kinds = {}; inArea.forEach(t => { const k = t.species || "未登録"; kinds[k] = (kinds[k]||0) + 1; });
+        return `<section class="area">
+          <h3>${esc(area)}<span>${inArea.length}本${nc ? `・座標なし${nc}` : ""}${inArea.some(t=>!t.species) ? `・種類なし${inArea.filter(t=>!t.species).length}` : ""}</span></h3>
+          <p class="kinds">${Object.entries(kinds).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`${esc(k)} ${n}`).join("　")}</p>
+          ${list.map(t => `<button class="trow" data-t="${esc(t.id)}"><span class="mini ${t.lat==null?"nc":""}">${esc(t.id)}</span>
+            <span class="tname">${esc(treeTitle(t))}${t.memo?`<small>${esc(t.memo)}</small>`:""}</span>
+            <span class="pill">${esc(t.lastStage || t.status || "")}</span></button>`).join("")}
+        </section>`;
+      }).join("");
+      document.getElementById("areas").innerHTML = html || `<p class="empty">${all.length ? "該当する木はありません" : "台帳がまだ空です。設定から trees.json を読み込んでください。"}</p>`;
+      document.querySelectorAll("#areas [data-t]").forEach(b=>b.onclick=()=>location.hash="#tree/"+encodeURIComponent(b.dataset.t));
+    };
+    $app.querySelector('[data-group="nc"]').addEventListener("click", () => setTimeout(draw)); draw();
+  },
+  async trees(){ location.replace("#areas"); },
+
+  async map(){
+    const areaNow = LS.get("kajuen.maparea") || "山の東エリア";
+    $app.innerHTML = `<div class="top"><button class="back" onclick="location.hash='#home'">← もどる</button></div><h2>📍 果樹園マップ</h2>
+      <div class="filter" style="margin-top:12px">${chips(["山の東エリア","山の西エリア","野下家","ぜんぶ"],"ma")}</div>
+      <div class="mapbox" id="mapbox"><p class="empty">読み込み中…</p></div>
+      <div class="maptools"><button class="gps" id="zin">＋</button><button class="gps" id="zout">－</button><button class="gps" id="here">🔵 いまの場所</button></div>
+      <p class="gpsnote" id="mapnote"></p><div id="legend" class="legend"></div>`;
+    wireChips($app);
+    $app.querySelector(`[data-group="ma"] [data-v="${areaNow}"]`)?.setAttribute("aria-pressed","true");
+    const all = await trees(true);
+    const PAL = ["#C0392B","#2E6DA4","#7B4FA0","#D98A1E","#3E8E5E","#B85C8A","#6B7B2A","#1F8A8A","#8E5A2B","#555"];
+    const kinds = [...new Set(all.map(t=>t.species||"未登録"))].sort((a,b)=>a.localeCompare(b,"ja"));
+    const color = k => k==="未登録" ? "#9AA39A" : PAL[kinds.filter(x=>x!=="未登録").indexOf(k) % PAL.length];
+    let zoom = 1, me_pos = null, watch = null;
+    const draw = () => {
+      const area = picked($app,"ma")[0] || "ぜんぶ"; LS.set("kajuen.maparea", area);
+      const inArea = all.filter(t => area==="ぜんぶ" || t.area===area);
+      const pts = inArea.filter(t => t.lat != null && t.lng != null);
+      const box = document.getElementById("mapbox");
+      document.getElementById("mapnote").textContent = `${pts.length}本を表示` + (inArea.length-pts.length ? `（座標なし ${inArea.length-pts.length}本は出ません）` : "");
+      if(!pts.length){ box.innerHTML = `<p class="empty">座標のある木がありません</p>`; document.getElementById("legend").innerHTML=""; return; }
+      const lat0 = pts.reduce((a,t)=>a+t.lat,0)/pts.length, kx = 111320*Math.cos(lat0*Math.PI/180), ky = 110540;
+      const P = (lat,lng) => [ (lng - pts[0].lng)*kx, (pts[0].lat - lat)*ky ];
+      const xy = pts.map(t => P(t.lat,t.lng)); if(me_pos) xy.push(P(me_pos.lat, me_pos.lng));
+      const xs = xy.map(p=>p[0]), ys = xy.map(p=>p[1]), pad = 6;
+      const minX = Math.min(...xs)-pad, minY = Math.min(...ys)-pad, w = Math.max(20, Math.max(...xs)-minX+pad), h = Math.max(20, Math.max(...ys)-minY+pad);
+      const r = Math.max(1.2, Math.min(w,h)/34);
+      const grid = []; for(let gx = Math.ceil(minX/10)*10; gx < minX+w; gx += 10) grid.push(`<line x1="${gx}" y1="${minY}" x2="${gx}" y2="${minY+h}"/>`);
+      for(let gy = Math.ceil(minY/10)*10; gy < minY+h; gy += 10) grid.push(`<line x1="${minX}" y1="${gy}" x2="${minX+w}" y2="${gy}"/>`);
+      box.innerHTML = `<svg viewBox="${minX} ${minY} ${w} ${h}" style="width:${zoom*100}%" role="img" aria-label="${esc(area)}の木の配置">
+        <rect x="${minX}" y="${minY}" width="${w}" height="${h}" fill="#E3E9D6"/>
+        <g class="grid">${grid.join("")}</g>
+        ${pts.map((t,i)=>{ const [x,y] = P(t.lat,t.lng); const k = t.species||"未登録";
+          return `<g class="pin" data-t="${esc(t.id)}" tabindex="0"><circle cx="${x}" cy="${y}" r="${r}" fill="${color(k)}" stroke="#fff" stroke-width="${r/5}"/>
+          <text x="${x}" y="${y+r*0.36}" font-size="${r*1.05}" text-anchor="middle" fill="#fff" font-weight="900">${esc(t.id)}</text></g>`; }).join("")}
+        ${me_pos ? (()=>{ const [x,y] = P(me_pos.lat, me_pos.lng); return `<circle cx="${x}" cy="${y}" r="${Math.max(me_pos.acc||3, r)}" fill="rgba(46,109,164,.15)"/><circle cx="${x}" cy="${y}" r="${r*0.6}" fill="#2E6DA4" stroke="#fff" stroke-width="${r/5}"/>`; })() : ""}
+        <g class="scale"><line x1="${minX+2}" y1="${minY+h-3}" x2="${minX+12}" y2="${minY+h-3}"/><text x="${minX+2}" y="${minY+h-4.5}" font-size="${Math.max(2,r*0.9)}">10m</text></g>
+        <text x="${minX+w-3}" y="${minY+r*1.6}" font-size="${r*1.2}" text-anchor="end" fill="#4C6A39" font-weight="900">↑北</text>
+      </svg>`;
+      box.querySelectorAll(".pin").forEach(g => { const go = () => location.hash = "#tree/" + encodeURIComponent(g.dataset.t); g.onclick = go; g.onkeydown = e => { if(e.key==="Enter") go(); }; });
+      const used = [...new Set(pts.map(t=>t.species||"未登録"))];
+      document.getElementById("legend").innerHTML = used.map(k=>`<span><i style="background:${color(k)}"></i>${esc(k)} ${pts.filter(t=>(t.species||"未登録")===k).length}</span>`).join("");
+    };
+    $app.querySelector('[data-group="ma"]').addEventListener("click", () => setTimeout(draw));
+    document.getElementById("zin").onclick = () => { zoom = Math.min(4, zoom*1.5); draw(); };
+    document.getElementById("zout").onclick = () => { zoom = Math.max(1, zoom/1.5); draw(); };
+    document.getElementById("here").onclick = () => {
+      if(watch != null){ navigator.geolocation.clearWatch(watch); watch = null; me_pos = null; draw(); return; }
+      if(!navigator.geolocation){ toast("このスマホでは位置が取れません"); return; }
+      toast("いまの場所を探しています…");
+      watch = navigator.geolocation.watchPosition(p => { me_pos = { lat:p.coords.latitude, lng:p.coords.longitude, acc:p.coords.accuracy }; draw(); },
+        () => toast("位置が取れませんでした。位置情報の許可を確認してください"), { enableHighAccuracy:true, maximumAge:5000 });
+    };
+    window.addEventListener("hashchange", () => { if(watch != null) navigator.geolocation.clearWatch(watch); }, { once:true });
+    draw();
+  },
+
+  async creatures(){
+    $app.innerHTML = `<div class="top"><button class="back" onclick="location.hash='#home'">← もどる</button></div><h2>🐞 生き物図鑑</h2>
+      <input class="field" id="q" placeholder="名前やメモでさがす" style="margin:12px 0 10px">
+      <div class="filter">${chips(["すべて","益虫","受粉者","害虫","中立"],"role")}</div><div id="cl"><p class="empty">読み込み中…</p></div>`;
+    wireChips($app); $app.querySelector('[data-group="role"] .chip').setAttribute("aria-pressed","true");
+    const all = await store.allCreatures().catch(()=>[]);
+    const gOrder = ["昆虫","鳥","両生類","植物"]; all.forEach(c => { const g = c.group || "その他"; if(!gOrder.includes(g)) gOrder.push(g); });
+    const draw = () => {
+      const role = picked($app,"role")[0] || "すべて", q = document.getElementById("q").value.trim();
+      const hit = all.filter(c => (role==="すべて" || c.role===role) && (!q || (c.name+c.memo).includes(q)));
+      document.getElementById("cl").innerHTML = hit.length ? gOrder.map(g => {
+        const list = hit.filter(c => (c.group||"その他")===g).sort((a,b)=>a.name.localeCompare(b.name,"ja")); if(!list.length) return "";
+        return `<section class="area"><h3>${esc(g)}<span>${list.length}</span></h3>${list.map(c=>`<div class="crit">
+          <div class="cname">${esc(c.name)}${c.role?`<span class="role r-${esc(c.role)}">${esc(c.role)}</span>`:""}</div>
+          ${c.memo?`<p>${esc(c.memo)}</p>`:""}</div>`).join("")}</section>`;
+      }).join("") : `<p class="empty">${all.length ? "見つかりませんでした" : "図鑑がまだ空です。設定から creatures.json を読み込んでください。"}</p>`;
+    };
+    $app.querySelector('[data-group="role"]').addEventListener("click", () => setTimeout(draw));
+    document.getElementById("q").addEventListener("input", draw); draw();
+  },
+
+  async settings(){
+    $app.innerHTML = `<div class="top"><button class="back" onclick="location.hash='#home'">← もどる</button></div><h2>⚙️ 設定</h2>
+      <div class="sec">
+        <button class="setbtn" id="exj">📦 全データを書き出す（JSON）<small>木の台帳と全記録。ゲームや分析用</small></button>
+        <button class="setbtn" id="exc">📊 記録を書き出す（CSV）<small>Excelやスプレッドシートで開ける</small></button>
+        <label class="setbtn">🌳 台帳ファイルを読み込む<small>trees.json（木）か creatures.json（生き物）。同じものは上書き、記録は消えません</small><input type="file" id="imp" accept=".json,application/json" hidden></label>
+        <button class="setbtn" id="nm">👤 名前を変える<small>いま：${esc(me)}さん</small></button>
+        <button class="setbtn" id="out">🔑 合言葉を入れ直す</button>
+      </div>
+      ${DEMO ? `<p class="demo">お試しモードです。Firebaseの設定を入れると、みんなで共有されます。</p>` : ""}`;
+    document.getElementById("exj").onclick = async () => { const [t,r] = await Promise.all([store.allTrees(), store.allRecords()]);
+      download(`kajuen-${today()}.json`, JSON.stringify({exportedAt:new Date().toISOString(), trees:t, records:r}, null, 1), "application/json"); };
+    document.getElementById("exc").onclick = async () => { const r = await store.allRecords();
+      const head = ["日付","種別","木ID","種類","様子","気になること","収穫量","単位","作業","場所","メモ","記録者","写真"];
+      const rows = r.map(x=>[x.date, x.type==="work"?"作業":"木", x.treeId || (x.treeIds||[]).join(" "), x.species||"", x.stage||"", (x.concerns||[]).join(" "),
+        x.harvest?.amount ?? "", x.harvest?.unit ?? "", (x.tasks||[]).join(" "), x.area||"", x.memo||"", x.by||"", x.hasPhoto?"あり":""]);
+      const csv = [head, ...rows].map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n");
+      download(`kajuen-records-${today()}.csv`, "\uFEFF"+csv, "text/csv"); };
+    document.getElementById("imp").onchange = async e => { const f = e.target.files[0]; if(!f) return;
+      try { const j = JSON.parse(await f.text());
+        if(Array.isArray(j.creatures)){ let n = 0;
+          for(const c of j.creatures){ const id = String(c.name||"").normalize("NFKC").trim().replace(/[\/]/g,"・"); if(!id) continue; await store.setCreature(id, c); n++; }
+          toast(`生き物を${n}件読み込みました`, 3000); e.target.value = ""; return; }
+        const list = Array.isArray(j) ? j : j.trees; if(!Array.isArray(list)) throw 0;
+        const seen = new Set(), dup = [];
+        for(const t of list){ const id = normId(t.id); if(!id) continue; if(seen.has(id)){ dup.push(id); continue; } seen.add(id);
+          const {id:_, ...rest} = t; await store.setTree(id, rest); }
+        treeCache = null; toast(`${seen.size}本を読み込みました` + (dup.length ? `（重複ID ${dup.join(",")} は飛ばしました）` : ""), 4000);
+      } catch { toast("ファイルの形式が違うようです"); } };
+    document.getElementById("nm").onclick = () => { LS.del("kajuen.name"); me = ""; route(); };
+    document.getElementById("out").onclick = () => { LS.del("kajuen.key"); LS.del("kajuen.name"); location.hash = ""; location.reload(); };
+  }
+};
+
+function itemHTML(r){
+  const tid = r.treeId ? `<a href="#tree/${encodeURIComponent(r.treeId)}">木${esc(r.treeId)}</a> ${esc(r.species||"")}` : "";
+  if(r.type === "edit") return `<div class="item edit"><div>✏️ ${tid}</div><div>${esc(r.memo)}</div><div class="meta">${esc(md(r.date))} ${esc(r.by||"")}</div></div>`;
+  const bits = r.type === "work"
+    ? [ (r.tasks||[]).join("・"), r.area, (r.treeIds||[]).length ? "木 "+r.treeIds.join(", ") : "" ]
+    : [ r.stage, (r.concerns||[]).join("・"), r.harvest ? `収穫 ${r.harvest.amount}${r.harvest.unit}` : "" ];
+  return `<div class="item ${r.type==="work"?"work":""}">
+    <div>${r.type==="work"?"🛠 ":""}${tid} ${esc(bits.filter(Boolean).join("　"))}${r.hasPhoto?`<button data-p="${esc(r.id)}">📷</button>`:""}</div>
+    ${r.memo ? `<div>${esc(r.memo)}</div>` : ""}
+    <div class="meta">${esc(md(r.date))} ${esc(r.by||"")}</div></div>`;
+}
+function wirePhotos(root){
+  root.querySelectorAll("[data-p]").forEach(b => b.onclick = async () => {
+    const src = await store.getPhoto(b.dataset.p).catch(()=>null); if(!src){ toast("写真はまだ届いていません"); return; }
+    const m = document.createElement("div"); m.className = "modal"; m.innerHTML = `<img alt="記録の写真">`; m.querySelector("img").src = src;
+    m.onclick = () => m.remove(); document.body.appendChild(m);
+  });
+}
+function download(name, text, type){
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+async function connect(key){ store = DEMO ? localStore(key) : await fireStore(key); }
+
+const TABS = [["home","🏠","ホーム"],["map","📍","マップ"],["areas","🌳","木"],["log","📖","記録"],["creatures","🐞","図鑑"]];
+function tabbar(){
+  document.getElementById("tabbar")?.remove(); document.body.classList.remove("tabs");
+  if(!NAV_TABS || !store || !me) return;
+  const h = location.hash.slice(1) || "home";
+  if(!TABS.some(t => t[0] === h)) return;
+  document.body.classList.add("tabs");
+  const nav = document.createElement("nav"); nav.id = "tabbar"; nav.className = "tabbar";
+  nav.innerHTML = TABS.map(([k,i,l]) => `<a href="#${k}" ${k===h?'aria-current="page"':""}><span>${i}</span>${l}</a>`).join("");
+  document.body.appendChild(nav);
+}
+async function route(){ await route0(); tabbar(); }
+async function route0(){
+  window.scrollTo(0,0);
+  if(!store){ const key = LS.get("kajuen.key");
+    if(!key) return view.login();
+    try { await connect(key); } catch(e){ console.error(e); return view.login(); } }
+  if(!me) return view.name();
+  const h = decodeURIComponent(location.hash.slice(1));
+  if(h.startsWith("tree/")) return view.tree(normId(h.slice(5)));
+  if(view[h] && !["login","name","tree"].includes(h)) return view[h]();
+  return view.home();
+}
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>
